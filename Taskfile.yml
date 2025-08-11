@@ -1,0 +1,16 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  test:
+    cmds:
+      - golangci-lint fmt
+      - golangci-lint run
+      - go test -race -p=1 ./...
+      - go test -race -v -bench=. -benchmem ./...
+
+  upgrade:
+    cmds:
+      - go mod tidy -v
+      - go get -u ./...
