@@ -25,17 +25,12 @@ func handleCepMsg(cfg *ConfigService) error {
 	_, err := cfg.nc.QueueSubscribe("service.cep", "cep-workers", func(m *nats.Msg) {
 		log.Printf("[cep] headers=%v data=%s", m.Header, string(m.Data))
 
-		if _, ok := m.Header["scheme"]; ok {
-			schema := map[string]string{"cep": "string", "street": "string", "city": "string", "state": "string"}
+		if _, ok := m.Header["schema"]; ok {
+			schema := map[string]string{"cep": "string"}
 			b, _ := json.Marshal(schema)
 			_ = m.RespondMsg(&nats.Msg{Data: b, Header: nats.Header{"schema": {string(b)}}})
 			return
 		}
-
-		// if uuidHeader := m.Header.Get("data"); uuidHeader != "" {
-		// 	_ = m.Respond([]byte(`{"uuid":"` + uuidHeader + `","status":"received"}`))
-		// 	return
-		// }
 
 		var req map[string]string
 		if err := json.Unmarshal(m.Data, &req); err != nil {
