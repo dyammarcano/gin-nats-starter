@@ -1,0 +1,14 @@
+environment: dev
+appID: c3669f0b-3f6d-4ca9-b416-0d3579d85642
+appSecret: dfa0435d-d1b9-4936-8c8e-0d027ba2991f
+logger:
+  logLevel: DEBUG
+service:
+  port: 8080
+  nats:
+    url: nats://localhost:4222
+    name: service-project
+    reconnectWait: 1s
+    maxReconnects: 5
+  database:
+    db_path: ./db/project.db
