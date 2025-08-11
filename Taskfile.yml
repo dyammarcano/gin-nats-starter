@@ -14,3 +14,11 @@ tasks:
     cmds:
       - go mod tidy -v
       - go get -u ./...
+
+  build-dev:
+    cmds:
+      - goreleaser build --snapshot --clean
+
+  build-prod:
+    cmds:
+      - goreleaser --snapshot --skip-publish --rm-dist

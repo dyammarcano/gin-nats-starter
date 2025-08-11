@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"awesomeProject6/internal/service"
+	"github.com/dyammarcano/gin-nats-starter/internal/service"
 
 	"github.com/spf13/cobra"
 )

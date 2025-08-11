@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,6 +25,28 @@ func Api(cmd *cobra.Command, _ []string) error {
 
 	proxy := func(subject string, timeout time.Duration) gin.HandlerFunc {
 		return func(c *gin.Context) {
+			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			defer cancel()
+
+			msg := &nats.Msg{Subject: subject, Data: []byte("empty"), Header: nats.Header{}}
+			if s := c.GetHeader("schema"); s != "" {
+				msg.Header.Set("schema", "1")
+
+				resp, err := cfg.nc.RequestMsgWithContext(ctx, msg)
+				if err != nil {
+					if errors.Is(err, nats.ErrNoResponders) {
+						c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service unavailable to process request"})
+						return
+					}
+
+					c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+					return
+				}
+
+				c.Data(http.StatusOK, "application/json", resp.Data)
+				return
+			}
+
 			var body map[string]any
 			if err := c.BindJSON(&body); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -31,29 +54,30 @@ func Api(cmd *cobra.Command, _ []string) error {
 			}
 
 			b, _ := json.Marshal(body)
-			msg := &nats.Msg{Subject: subject, Data: b, Header: nats.Header{}}
-			if s := c.GetHeader("schema"); s != "" {
-				msg.Header.Set("schema", "1")
-			}
+			msg.Data = b
 
 			if d := c.GetHeader("data"); d != "" {
 				msg.Header.Set("data", d)
 			}
 
-			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
-			defer cancel()
-
 			resp, err := cfg.nc.RequestMsgWithContext(ctx, msg)
 			if err != nil {
+				if errors.Is(err, nats.ErrNoResponders) {
+					c.JSON(http.StatusServiceUnavailable, gin.H{"error": "service unavailable to process request"})
+					return
+				}
+
 				c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 				return
 			}
 
 			c.Data(http.StatusOK, "application/json", resp.Data)
+			return
 		}
 	}
 
 	r.POST("/lookup/cep", proxy("service.cep", 2*time.Second))
+	r.POST("/lookup/cpfcnpj", proxy("service.cpfcnpj", 2*time.Second))
 	r.POST("/lookup/clima", proxy("service.clima", 2*time.Second))
 	r.POST("/validate/identity", proxy("service.identity", 3*time.Second))
 

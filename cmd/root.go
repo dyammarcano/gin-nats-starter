@@ -7,7 +7,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "awesomeProject6",
+	Use:   "github.com/dyammarcano/gin-nats-starter",
 	Short: "A brief description of your application",
 }
 
@@ -18,5 +18,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.awesomeProject6.yaml)")
+	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.github.com/dyammarcano/gin-nats-starter.yaml)")
 }

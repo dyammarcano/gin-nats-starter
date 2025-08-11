@@ -1,9 +1,12 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
-	"awesomeProject6/internal/model"
+	"github.com/dyammarcano/gin-nats-starter/internal/model"
+	"github.com/nats-io/nats.go"
 
 	"github.com/spf13/cobra"
 	"gorm.io/driver/sqlite"
@@ -41,5 +44,41 @@ func Identity(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
-	return nil
+	_, err = cfg.nc.QueueSubscribe("service.identity", "identity-workers", identityWorkers(db))
+	if err != nil {
+		return err
+	}
+
+	log.Println("Identity service listening")
+	select {}
+}
+
+func identityWorkers(db *gorm.DB) func(m *nats.Msg) {
+	return func(m *nats.Msg) {
+		log.Printf("[identity] headers=%v data=%s", m.Header, string(m.Data))
+
+		var ident model.Identity
+
+		if _, ok := m.Header["scheme"]; ok {
+			b, _ := json.Marshal(ident)
+			_ = m.RespondMsg(&nats.Msg{Data: b, Header: nats.Header{"schema": {string(b)}}})
+			return
+		}
+
+		var req map[string]string
+		if err := json.Unmarshal(m.Data, &req); err != nil {
+			_ = m.Respond([]byte(`{"error":"bad request"}`))
+			return
+		}
+
+		docQ := req["document"]
+		valid := false
+		if len(docQ) == 11 || len(docQ) == 14 {
+			valid = true
+		}
+
+		_ = db.First(&ident, "cpf = ? OR cnpj = ?", docQ, docQ)
+		b, _ := json.Marshal(map[string]any{"valid": valid, "found_name": ident.Name})
+		_ = m.Respond(b)
+	}
 }

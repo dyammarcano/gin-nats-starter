@@ -22,37 +22,7 @@ func Cep(cmd *cobra.Command, _ []string) error {
 }
 
 func handleCepMsg(cfg *ConfigService) error {
-	_, err := cfg.nc.QueueSubscribe("service.cep", "cep-workers", func(m *nats.Msg) {
-		log.Printf("[cep] headers=%v data=%s", m.Header, string(m.Data))
-
-		if _, ok := m.Header["schema"]; ok {
-			schema := map[string]string{"cep": "string"}
-			b, _ := json.Marshal(schema)
-			_ = m.RespondMsg(&nats.Msg{Data: b, Header: nats.Header{"schema": {string(b)}}})
-			return
-		}
-
-		var req map[string]string
-		if err := json.Unmarshal(m.Data, &req); err != nil {
-			_ = m.Respond([]byte(`{"error":"bad_request"}`))
-			return
-		}
-
-		cepQ := req["cep"]
-		if cepQ == "" {
-			_ = m.Respond([]byte(`{"error":"missing_cep"}`))
-			return
-		}
-
-		respMsg, err := queryCEP(cepQ)
-		if err != nil {
-			log.Printf("[cep] error querying CEP: %v", err)
-			_ = m.Respond([]byte(`{"error":"service_unavailable"}`))
-			return
-		}
-
-		_ = m.Respond(respMsg)
-	})
+	_, err := cfg.nc.QueueSubscribe("service.cep", "cep-workers", cepWorkers)
 	if err != nil {
 		log.Printf("[cep] error subscribing to service.cep: %v", err)
 		return err
@@ -60,6 +30,38 @@ func handleCepMsg(cfg *ConfigService) error {
 
 	log.Println("CEP proxy service listening")
 	select {}
+}
+
+func cepWorkers(m *nats.Msg) {
+	log.Printf("[cep] headers=%v data=%s", m.Header, string(m.Data))
+
+	if _, ok := m.Header["schema"]; ok {
+		schema := map[string]string{"cep": "string"}
+		b, _ := json.Marshal(schema)
+		_ = m.RespondMsg(&nats.Msg{Data: b, Header: nats.Header{"schema": {string(b)}}})
+		return
+	}
+
+	var req map[string]string
+	if err := json.Unmarshal(m.Data, &req); err != nil {
+		_ = m.Respond([]byte(`{"error":"bad request"}`))
+		return
+	}
+
+	cepQ := req["cep"]
+	if cepQ == "" {
+		_ = m.Respond([]byte(`{"error":"missing cep"}`))
+		return
+	}
+
+	respMsg, err := queryCEP(cepQ)
+	if err != nil {
+		log.Printf("[cep] error querying CEP: %v", err)
+		_ = m.Respond([]byte(`{"error":"service unavailable"}`))
+		return
+	}
+
+	_ = m.Respond(respMsg)
 }
 
 func queryCEP(cep string) ([]byte, error) {

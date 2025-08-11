@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"awesomeProject6/internal/service"
+	"github.com/dyammarcano/gin-nats-starter/internal/service"
 
 	"github.com/spf13/cobra"
 )
 
-// cpfCmd represents the cpf command
-var cpfCmd = &cobra.Command{
-	Use:   "cpf",
+// cnpjCmd represents the cpfcnpj command
+var cnpjCmd = &cobra.Command{
+	Use:   "cpfcnpj",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -16,9 +16,9 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	RunE: service.Cpf,
+	RunE: service.CpfCnpj,
 }
 
 func init() {
-	rootCmd.AddCommand(cpfCmd)
+	rootCmd.AddCommand(cnpjCmd)
 }

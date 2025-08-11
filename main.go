@@ -1,6 +1,6 @@
 package main
 
-import "awesomeProject6/cmd"
+import "github.com/dyammarcano/gin-nats-starter/cmd"
 
 func main() {
 	cmd.Execute()
