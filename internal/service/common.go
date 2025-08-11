@@ -10,13 +10,14 @@ import (
 )
 
 type ConfigService struct {
-	nc         *nats.Conn
-	ctx        context.Context
-	cancel     context.CancelFunc
-	BaseConfig *config.Config `yaml:"-"`
-	Port       int            `yaml:"port"`
-	Nats       NatsConfig     `yaml:"nats"`
-	Database   Database       `yaml:"database"`
+	nc          *nats.Conn
+	ctx         context.Context
+	cancel      context.CancelFunc
+	BaseConfig  *config.Config `yaml:"-"`
+	OpenApiPath string         `yaml:"openapiPath"`
+	Port        int            `yaml:"port"`
+	Nats        NatsConfig     `yaml:"nats"`
+	Database    Database       `yaml:"database"`
 }
 
 func (c *ConfigService) Close() error {

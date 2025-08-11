@@ -4,6 +4,7 @@ appSecret: dfa0435d-d1b9-4936-8c8e-0d027ba2991f
 logger:
   logLevel: DEBUG
 service:
+  openapiPath: openapi.yaml
   port: 8080
   nats:
     url: nats://localhost:4222

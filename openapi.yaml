@@ -1,0 +1,21 @@
+openapi: 3.0.0
+info:
+  title: My API
+  version: 1.0.0
+paths:
+  /lookup/cep:
+    post:
+      x-nats-subject: service.cep
+      x-timeout: 2s
+  /lookup/cpfcnpj:
+    post:
+      x-nats-subject: service.cpfcnpj
+      x-timeout: 2s
+  /lookup/clima:
+    post:
+      x-nats-subject: service.clima
+      x-timeout: 2s
+  /validate/identity:
+    post:
+      x-nats-subject: service.identity
+      x-timeout: 3s
