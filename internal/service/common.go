@@ -16,12 +16,17 @@ type ConfigService struct {
 	BaseConfig *config.Config
 	Port       int        `yaml:"port"`
 	Nats       NatsConfig `yaml:"nats"`
+	Database   Database   `yaml:"database"`
 }
 
 func (c *ConfigService) Close() error {
 	c.cancel()
 	c.nc.Close()
 	return nil
+}
+
+type Database struct {
+	DBPath string `yaml:"db_path"`
 }
 
 type NatsConfig struct {
