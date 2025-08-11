@@ -32,8 +32,8 @@ func Api(cmd *cobra.Command, _ []string) error {
 
 			b, _ := json.Marshal(body)
 			msg := &nats.Msg{Subject: subject, Data: b, Header: nats.Header{}}
-			if s := c.GetHeader("scheme"); s != "" {
-				msg.Header.Set("scheme", "1")
+			if s := c.GetHeader("schema"); s != "" {
+				msg.Header.Set("schema", "1")
 			}
 
 			if d := c.GetHeader("data"); d != "" {
@@ -45,18 +45,16 @@ func Api(cmd *cobra.Command, _ []string) error {
 
 			resp, err := cfg.nc.RequestMsgWithContext(ctx, msg)
 			if err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"service": subject, "error": err.Error()})
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 				return
 			}
-			if h := resp.Header.Get("schema"); h != "" {
-				c.Header("schema", h)
-			}
+
 			c.Data(http.StatusOK, "application/json", resp.Data)
 		}
 	}
 
 	r.POST("/lookup/cep", proxy("service.cep", 2*time.Second))
-	r.POST("/lookup/doc", proxy("service.doc", 2*time.Second))
+	r.POST("/lookup/clima", proxy("service.clima", 2*time.Second))
 	r.POST("/validate/identity", proxy("service.identity", 3*time.Second))
 
 	port := cfg.Port
